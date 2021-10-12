@@ -14,7 +14,7 @@
 // * limitations under the License.
 // */
 //
-//package com.example.android.dessertclicker
+package com.example.android.dessertclicker
 //
 //import android.os.Handler
 //import timber.log.Timber
