@@ -18,6 +18,7 @@ package com.example.android.trackmysleepquality.sleeptracker
 
 import android.app.Application
 import androidx.lifecycle.*
+import androidx.lifecycle.Transformations.map
 import com.example.android.trackmysleepquality.database.SleepDatabaseDao
 import com.example.android.trackmysleepquality.database.SleepNight
 import com.example.android.trackmysleepquality.formatNights
@@ -32,10 +33,28 @@ class SleepTrackerViewModel(
 ): AndroidViewModel(application) {
 
         private val tonight = MutableLiveData<SleepNight?>()
+        val isStartButtonVisible = map(tonight) {
+                it == null
+        }
+        val isStopButtonVisible = map(tonight) {
+                it != null
+        }
+
         private val nights = database.getAllNights()
-        val nightsString = Transformations.map(nights) {
+        val nightsString = map(nights) {
                 formatNights(it, application.resources)
         }
+        val isClearButtonVisible = map(nights) {
+                it?.isNotEmpty() ?: false
+        }
+
+        private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
+        val navigateToSleepQuality: LiveData<SleepNight>
+                get() = _navigateToSleepQuality
+
+        private val _showSnackBar = MutableLiveData<Boolean>()
+        val showSnackbar: LiveData<Boolean>
+                get() = _showSnackBar
 
         companion object {
                 const val TAG = "SleepTrackerViewModel"
@@ -67,6 +86,7 @@ class SleepTrackerViewModel(
                         val oldNight = tonight.value ?: return@launch
                         oldNight.endTimeMilli = System.currentTimeMillis()
                         update(oldNight)
+                        _navigateToSleepQuality.value = oldNight
                 }
         }
 
@@ -74,6 +94,7 @@ class SleepTrackerViewModel(
 
         private suspend fun clear() {
                 database.clear()
+                _showSnackBar.value = true
         }
 
         private suspend fun getTonight(): SleepNight? {
@@ -88,5 +109,13 @@ class SleepTrackerViewModel(
 
         private suspend fun update(night: SleepNight) {
                 database.update(night)
+        }
+
+        fun onNavigationComplete() {
+                _navigateToSleepQuality.value = null
+        }
+
+        fun onShowSnackBarComplete(){
+                _showSnackBar.value = false
         }
 }
