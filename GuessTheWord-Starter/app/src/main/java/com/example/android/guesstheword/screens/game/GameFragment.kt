@@ -46,27 +46,20 @@ class GameFragment : Fragment() {
                               savedInstanceState: Bundle?): View? {
 
         // Inflate view and obtain an instance of the binding class
+        viewModel = ViewModelProvider(this).get(GameViewModel::class.java).also {
+            it.eventGameEnded.observe(viewLifecycleOwner, Observer { isFinished ->
+                if(isFinished) onEndGame()
+            })
+        }
+
         binding = DataBindingUtil.inflate<GameFragmentBinding>(
                 inflater,
                 R.layout.game_fragment,
                 container,
                 false
         ).also {
-            it.correctButton.setOnClickListener { onCorrect() }
-            it.skipButton.setOnClickListener { onSkip() }
-            it.endGameButton.setOnClickListener { onEndGame() }
-        }
-
-        viewModel = ViewModelProvider(this).get(GameViewModel::class.java).also {
-            it.score.observe(viewLifecycleOwner, Observer { newScore ->
-                binding.scoreText.text = newScore.toString()
-            })
-            it.word.observe(viewLifecycleOwner, Observer { newWord ->
-                binding.wordText.text = newWord
-            })
-            it.eventGameEnded.observe(viewLifecycleOwner, Observer { isFinished ->
-                if(isFinished) onEndGame()
-            })
+            it.gameViewModel = viewModel
+            it.lifecycleOwner = viewLifecycleOwner
         }
 
         return binding.root
@@ -75,14 +68,6 @@ class GameFragment : Fragment() {
 
 
     /** Methods for buttons presses **/
-
-    private fun onSkip() {
-        viewModel.onSkip()
-    }
-
-    private fun onCorrect() {
-        viewModel.onCorrect()
-    }
 
     private fun onEndGame() {
         Toast.makeText(activity, "Game finished", Toast.LENGTH_SHORT).show()
