@@ -17,14 +17,76 @@
 package com.example.android.trackmysleepquality.sleeptracker
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.*
 import com.example.android.trackmysleepquality.database.SleepDatabaseDao
+import com.example.android.trackmysleepquality.database.SleepNight
+import com.example.android.trackmysleepquality.formatNights
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for SleepTrackerFragment.
  */
 class SleepTrackerViewModel(
         val database: SleepDatabaseDao,
-        application: Application) : AndroidViewModel(application) {
-}
+        application: Application
+): AndroidViewModel(application) {
 
+        private val tonight = MutableLiveData<SleepNight?>()
+        private val nights = database.getAllNights()
+        val nightsString = Transformations.map(nights) {
+                formatNights(it, application.resources)
+        }
+
+        companion object {
+                const val TAG = "SleepTrackerViewModel"
+        }
+
+        init {
+                viewModelScope.launch {
+                        tonight.value = getTonight()
+                }
+        }
+
+        fun onClear() {
+                viewModelScope.launch {
+                        clear()
+                        tonight.value = null
+                }
+        }
+
+        fun onStartTracking() {
+                viewModelScope.launch {
+                        val newNight = SleepNight()
+                        insert(newNight)
+                        tonight.value = getTonight()
+                }
+        }
+
+        fun onStopTracking() {
+                viewModelScope.launch {
+                        val oldNight = tonight.value ?: return@launch
+                        oldNight.endTimeMilli = System.currentTimeMillis()
+                        update(oldNight)
+                }
+        }
+
+        // helpers
+
+        private suspend fun clear() {
+                database.clear()
+        }
+
+        private suspend fun getTonight(): SleepNight? {
+                val night = database.getTonight()
+                val isComplete = night?.endTimeMilli != night?.startTimeMilli
+                return if (isComplete) null else night
+        }
+
+        private suspend fun insert(night: SleepNight) {
+                database.insert(night)
+        }
+
+        private suspend fun update(night: SleepNight) {
+                database.update(night)
+        }
+}
