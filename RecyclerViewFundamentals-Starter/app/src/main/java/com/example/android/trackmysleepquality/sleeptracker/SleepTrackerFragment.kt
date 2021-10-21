@@ -59,7 +59,7 @@ class SleepTrackerFragment : Fragment() {
             .get(SleepTrackerViewModel::class.java).also {
 
                 it.nights.observe(viewLifecycleOwner, { nights ->
-                    nights?.let { adapter.data = nights }
+                    nights?.let { adapter.submitList(nights) }
                 })
 
                 it.showSnackBarEvent.observe(viewLifecycleOwner, { isShowSnackBarEvent ->
