@@ -50,62 +50,52 @@ class SleepTrackerFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
 
-        // Get a reference to the binding object and inflate the fragment views.
-        val binding: FragmentSleepTrackerBinding = DataBindingUtil.inflate(
-                inflater, R.layout.fragment_sleep_tracker, container, false)
-
         val application = requireNotNull(this.activity).application
-
-        // Create an instance of the ViewModel Factory.
         val dataSource = SleepDatabase.getInstance(application).sleepDatabaseDao
+        val adapter = SleepNightAdapter()
+
         val viewModelFactory = SleepTrackerViewModelFactory(dataSource, application)
+        val sleepTrackerViewModel = ViewModelProvider(this, viewModelFactory)
+            .get(SleepTrackerViewModel::class.java).also {
 
-        // Get a reference to the ViewModel associated with this fragment.
-        val sleepTrackerViewModel =
-                ViewModelProvider(
-                        this, viewModelFactory).get(SleepTrackerViewModel::class.java)
+                it.nights.observe(viewLifecycleOwner, { nights ->
+                    nights?.let { adapter.data = nights }
+                })
 
-        // To use the View Model with data binding, you have to explicitly
-        // give the binding object a reference to it.
-        binding.sleepTrackerViewModel = sleepTrackerViewModel
+                it.showSnackBarEvent.observe(viewLifecycleOwner, { isShowSnackBarEvent ->
+                    if (isShowSnackBarEvent == true) {
+                        Snackbar.make(
+                            requireActivity().findViewById(android.R.id.content),
+                            getString(R.string.cleared_message),
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                        it.doneShowingSnackbar()
+                    }
+                })
 
-        // Specify the current activity as the lifecycle owner of the binding.
-        // This is necessary so that the binding can observe LiveData updates.
-        binding.lifecycleOwner = this
-
-        // Add an Observer on the state variable for showing a Snackbar message
-        // when the CLEAR button is pressed.
-        sleepTrackerViewModel.showSnackBarEvent.observe(viewLifecycleOwner, Observer {
-            if (it == true) { // Observed state is true.
-                Snackbar.make(
-                        requireActivity().findViewById(android.R.id.content),
-                        getString(R.string.cleared_message),
-                        Snackbar.LENGTH_SHORT // How long to display the message.
-                ).show()
-                // Reset state to make sure the toast is only shown once, even if the device
-                // has a configuration change.
-                sleepTrackerViewModel.doneShowingSnackbar()
-            }
-        })
-
-        // Add an Observer on the state variable for Navigating when STOP button is pressed.
-        sleepTrackerViewModel.navigateToSleepQuality.observe(viewLifecycleOwner, Observer { night ->
-            night?.let {
-                // We need to get the navController from this, because button is not ready, and it
-                // just has to be a view. For some reason, this only matters if we hit stop again
-                // after using the back button, not if we hit stop and choose a quality.
-                // Also, in the Navigation Editor, for Quality -> Tracker, check "Inclusive" for
-                // popping the stack to get the correct behavior if we press stop multiple times
-                // followed by back.
-                // Also: https://stackoverflow.com/questions/28929637/difference-and-uses-of-oncreate-oncreateview-and-onactivitycreated-in-fra
-                this.findNavController().navigate(
-                        SleepTrackerFragmentDirections
+                it.navigateToSleepQuality.observe(viewLifecycleOwner, Observer { night ->
+                    night?.let { _ ->
+                        this.findNavController().navigate(
+                            SleepTrackerFragmentDirections
                                 .actionSleepTrackerFragmentToSleepQualityFragment(night.nightId))
-                // Reset state to make sure we only navigate once, even if the device
-                // has a configuration change.
-                sleepTrackerViewModel.doneNavigating()
+                        it.doneNavigating()
+                    }
+                })
             }
-        })
+
+
+
+        val binding =  DataBindingUtil.inflate<FragmentSleepTrackerBinding>(
+            inflater,
+            R.layout.fragment_sleep_tracker,
+            container,
+            false
+        ).also {
+            it.sleepTrackerViewModel = sleepTrackerViewModel
+            it.lifecycleOwner = this
+            it.sleepList.adapter = adapter
+        }
+
         return binding.root
     }
 }
