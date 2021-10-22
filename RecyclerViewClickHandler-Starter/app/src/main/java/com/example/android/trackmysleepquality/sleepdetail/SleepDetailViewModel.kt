@@ -35,17 +35,12 @@ import kotlinx.coroutines.withContext
  */
 class SleepDetailViewModel(
         private val sleepNightKey: Long = 0L,
-        dataSource: SleepDatabaseDao) : ViewModel() {
+        dataSource: SleepDatabaseDao
+) : ViewModel() {
 
-    /**
-     * Hold a reference to SleepDatabase via its SleepDatabaseDao.
-     */
     val database = dataSource
-
     private val night: LiveData<SleepNight>
-
     fun getNight() = night
-
 
     init {
         night=database.getNightWithId(sleepNightKey)
@@ -53,18 +48,11 @@ class SleepDetailViewModel(
 
     /**
      * Variable that tells the fragment whether it should navigate to [SleepTrackerFragment].
-     *
-     * This is `private` because we don't want to expose the ability to set [MutableLiveData] to
-     * the [Fragment]
-     */
-    private val _navigateToSleepTracker = MutableLiveData<Boolean?>()
-
-    /**
      * When true immediately navigate back to the [SleepTrackerFragment]
      */
+    private val _navigateToSleepTracker = MutableLiveData<Boolean?>()
     val navigateToSleepTracker: LiveData<Boolean?>
         get() = _navigateToSleepTracker
-
 
     /**
      * Call this immediately after navigating to [SleepTrackerFragment]
