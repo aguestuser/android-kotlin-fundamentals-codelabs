@@ -42,13 +42,13 @@ class OverviewFragment : Fragment() {
      */
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-        val binding = FragmentOverviewBinding.inflate(inflater)
 
-        // Allows Data Binding to Observe LiveData with the lifecycle of this Fragment
-        binding.lifecycleOwner = this
-
-        // Giving the binding access to the OverviewViewModel
-        binding.viewModel = viewModel
+        val binding = FragmentOverviewBinding.inflate(inflater).also {
+            // Allows Data Binding to Observe LiveData with the lifecycle of this Fragment
+            it.lifecycleOwner = this
+            // Giving the binding access to the OverviewViewModel
+            it.viewModel = viewModel
+        }
 
         setHasOptionsMenu(true)
         return binding.root
