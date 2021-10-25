@@ -44,15 +44,15 @@ class OverviewFragment : Fragment() {
                               savedInstanceState: Bundle?): View? {
 
         val binding = FragmentOverviewBinding.inflate(inflater).also {
-            // Allows Data Binding to Observe LiveData with the lifecycle of this Fragment
             it.lifecycleOwner = this
-            // Giving the binding access to the OverviewViewModel
             it.viewModel = viewModel
+            it.photosGrid.adapter = PhotoGridAdapter()
         }
 
         setHasOptionsMenu(true)
         return binding.root
     }
+
 
     /**
      * Inflates the overflow menu that contains filtering options.
