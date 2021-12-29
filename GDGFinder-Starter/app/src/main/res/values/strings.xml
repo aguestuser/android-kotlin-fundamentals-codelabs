@@ -56,4 +56,5 @@
     <string name="submitted">Submitted, no need to submit again</string>
     <string name="done">Done</string>
     <string name="submit">Submit</string>
+    <string name="action_button_with_arrow">Action button with arrow pointing right</string>
 </resources>
